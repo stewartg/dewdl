@@ -1,7 +1,7 @@
 import sys
 
 from dewdl import DewDLConfigs
-from dewdl.cli.config import set_config
+from dewdl._cli._config_interface import set_config
 
 
 def run():
