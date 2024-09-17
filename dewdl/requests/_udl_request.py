@@ -5,6 +5,7 @@ import requests  # type: ignore
 from requests.models import Response  # type: ignore
 
 from dewdl import DewDLConfigs
+from dewdl.enums import UDLRequestSuccessCode
 from dewdl.exceptions import UDLRequestError
 from dewdl.requests._udl_query import UDLQuery
 
@@ -74,7 +75,11 @@ def _filedrop_to_udl_with_b64(udl_endpoint: UDLQuery, post_body: list[dict], b64
     response = requests.post(udl_endpoint.to_string(), data=body_str, verify=True, headers=udl_headers)
 
     # check for successful post
-    if response.status_code != 202:
+    try:
+        success_code = UDLRequestSuccessCode(response.status_code)
+    except ValueError:
+        success_code = response.status_code
+    if success_code != UDLRequestSuccessCode.FILEDROP:
         raise UDLRequestError(response)
 
 
@@ -108,7 +113,11 @@ def _filedrop_to_udl_with_cert(udl_endpoint: UDLQuery, post_body: list[dict], ce
     )
 
     # check for successful post
-    if response.status_code != 202:
+    try:
+        success_code = UDLRequestSuccessCode(response.status_code)
+    except ValueError:
+        success_code = response.status_code
+    if success_code != UDLRequestSuccessCode.FILEDROP:
         raise UDLRequestError(response)
 
     return response.text
@@ -144,7 +153,11 @@ def _post_to_udl_with_b64(udl_endpoint: UDLQuery, post_body: dict, b64_key: str)
     response = requests.post(udl_endpoint.to_string(), data=body_str, verify=False, headers=udl_headers)
 
     # check for successful post
-    if response.status_code != 201:
+    try:
+        success_code = UDLRequestSuccessCode(response.status_code)
+    except ValueError:
+        success_code = response.status_code
+    if success_code != UDLRequestSuccessCode.POST:
         raise UDLRequestError(response)
 
     # check for location of newly posted data
@@ -193,7 +206,11 @@ def _post_to_udl_with_cert(udl_endpoint: UDLQuery, post_body: dict, cert_path: P
     )
 
     # check for successful post
-    if response.status_code != 201:
+    try:
+        success_code = UDLRequestSuccessCode(response.status_code)
+    except ValueError:
+        success_code = response.status_code
+    if success_code != UDLRequestSuccessCode.POST:
         raise UDLRequestError(response)
 
     # check for location of newly posted data
@@ -220,7 +237,11 @@ def _get_from_udl_with_b64(udl_endpoint: UDLQuery, b64_key: str) -> Response:
     """
 
     response = requests.get(udl_endpoint.to_string(), headers={"Authorization": b64_key}, verify=False)
-    if response.status_code != 200:
+    try:
+        success_code = UDLRequestSuccessCode(response.status_code)
+    except ValueError:
+        success_code = response.status_code
+    if success_code != UDLRequestSuccessCode.GET:
         raise UDLRequestError(response)
 
     return response
@@ -239,7 +260,11 @@ def _get_from_udl_with_cert(udl_endpoint: UDLQuery, cert_path: Path, key_path: P
     """
 
     response = requests.get(udl_endpoint.to_string(), cert=(cert_path.as_posix(), key_path.as_posix()), verify=True)
-    if response.status_code != 200:
+    try:
+        success_code = UDLRequestSuccessCode(response.status_code)
+    except ValueError:
+        success_code = response.status_code
+    if success_code != UDLRequestSuccessCode.GET:
         raise UDLRequestError(response)
 
     return response

@@ -67,3 +67,28 @@ def test_get():
     udl_endpoint = UDLQuery(UDLQueryType.ELSET, UDLEnvironment.PROD).with_uuid("c60092be-9220-4f22-b0e4-5e5731341e7a")
     response = UDLRequest.get(udl_endpoint)
     assert response.status_code == 200
+
+
+def test_filedrop():
+
+    notifs = [
+        {
+            "classificationMarking": "U",
+            "msgType": "testMessage",
+            "msgBody": "msgBody",
+            "dataMode": "TEST",
+            "source": "SSDP",
+            "origin": "DnD",
+        },
+        {
+            "classificationMarking": "U",
+            "msgType": "testMessage",
+            "msgBody": "msgBody",
+            "dataMode": "TEST",
+            "source": "SSDP",
+            "origin": "DnD",
+        },
+    ]
+    udl_endpoint = UDLQuery(UDLQueryType.NOTIFICATION, UDLEnvironment.TEST)
+    response = UDLRequest.filedrop(udl_endpoint, notifs)
+    assert response.status_code == 200
