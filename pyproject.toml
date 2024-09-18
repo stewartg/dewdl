@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
 authors = [{ name = "Brandon Sexton", email = "bsexton@icr-team.com" }]
-dependencies = ["appdirs", "requests"]
+dependencies = ["appdirs", "requests", "pydantic"]
 
 [project.optional-dependencies]
 dev = [

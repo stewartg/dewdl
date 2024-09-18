@@ -7,6 +7,7 @@ from requests.models import Response  # type: ignore
 from dewdl import DewDLConfigs
 from dewdl.enums import UDLRequestSuccessCode
 from dewdl.exceptions import UDLRequestError
+from dewdl.requests._udl_filedrop import UDLFileDrop
 from dewdl.requests._udl_query import UDLQuery
 
 
@@ -16,10 +17,6 @@ class UDLRequest:
         """Converts the string 'True' to 'true' and 'False' to 'False'
 
         :param input_str: The string to convert
-        :type input_str: str
-
-        :return: The converted string
-        :rtype: str
         """
         return input_str.replace("True", "true").replace("False", "false")
 
@@ -33,7 +30,7 @@ class UDLRequest:
         return uuid_str
 
     @staticmethod
-    def filedrop(endpoint: UDLQuery, post_body: list[dict]) -> None:
+    def filedrop(endpoint: UDLFileDrop, post_body: list[dict]) -> None:
         crt, key = DewDLConfigs.get_crt_path(), DewDLConfigs.get_key_path()
         if crt is not None and key is not None:
             _filedrop_to_udl_with_cert(endpoint, post_body, crt, key)
@@ -50,7 +47,7 @@ class UDLRequest:
         return udl_response
 
 
-def _filedrop_to_udl_with_b64(udl_endpoint: UDLQuery, post_body: list[dict], b64_key: str) -> None:
+def _filedrop_to_udl_with_b64(udl_endpoint: UDLFileDrop, post_body: list[dict], b64_key: str) -> None:
     """Performs a POST request of bulk data to the UDL server using a base64 encoded key
 
     :param udl_endpoint: URL of the UDL request
@@ -83,7 +80,9 @@ def _filedrop_to_udl_with_b64(udl_endpoint: UDLQuery, post_body: list[dict], b64
         raise UDLRequestError(response)
 
 
-def _filedrop_to_udl_with_cert(udl_endpoint: UDLQuery, post_body: list[dict], cert_path: Path, key_path: Path) -> str:
+def _filedrop_to_udl_with_cert(
+    udl_endpoint: UDLFileDrop, post_body: list[dict], cert_path: Path, key_path: Path
+) -> str:
     """Performs a POST request of bulk data to the UDL server using a certificate and key
 
     :param udl_endpoint: URL of the UDL request

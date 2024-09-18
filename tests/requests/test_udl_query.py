@@ -33,3 +33,24 @@ def test_with_uuid():
     eo_str = UDLQuery(UDLQueryType.EO_OBSERVATION, UDLEnvironment.TEST).with_uuid("1234").to_string()
     unstub()
     assert eo_str == "test_base/1234"
+
+
+def test_from_source():
+    when(UDLQuery)._build_base_url().thenReturn("test_base")
+    eo_str = UDLQuery(UDLQueryType.EO_OBSERVATION, UDLEnvironment.TEST).from_source("test_source").to_string()
+    unstub()
+    assert eo_str == "test_base?source=test_source&maxResults=10000"
+
+
+def test_max_results():
+    when(UDLQuery)._build_base_url().thenReturn("test_base")
+    eo_str = UDLQuery(UDLQueryType.EO_OBSERVATION, UDLEnvironment.TEST).max_results(5).to_string()
+    unstub()
+    assert eo_str == "test_base?maxResults=5"
+
+
+def test_with_descriptor():
+    when(UDLQuery)._build_base_url().thenReturn("test_base")
+    eo_str = UDLQuery(UDLQueryType.EO_OBSERVATION, UDLEnvironment.TEST).with_descriptor("test_descriptor").to_string()
+    unstub()
+    assert eo_str == "test_base?descriptor=test_descriptor&maxResults=10000"

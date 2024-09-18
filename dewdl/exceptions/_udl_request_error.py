@@ -11,14 +11,14 @@ class UDLRequestError(Exception):
         try:
             status_code = UDLRequestErrorCode(response.status_code)
         except ValueError:
-            status_code = response.status_code
+            status_code = UDLRequestErrorCode.UNKNOWN
 
         if status_code == UDLRequestErrorCode.INVALID_CREDENTIALS:
-            msg = "Invalid credentials for UDL"
+            msg = f"{status_code.value} Unauthorized - Verify credentials and try again."
         else:
             try:
-                msg = json.loads(response.text)["message"]
+                msg = f'{response.status_code} - {json.loads(response.text)["message"]}'
             except KeyError:
-                msg = f"Unexpected response - {response.status_code}"
+                msg = f"{response.status_code} - Unexpected response"
 
         super().__init__(f"{msg}")

@@ -84,6 +84,26 @@ class DewDLConfigs:
         return key_path
 
     @staticmethod
+    def delete_user():
+        DewDLConfigs._settings_dict.pop(DewDLConfigs.USER_JSON_KEY)
+        DewDLConfigs.save_config_file()
+
+    @staticmethod
+    def delete_password():
+        DewDLConfigs._settings_dict.pop(DewDLConfigs.PASSWORD_JSON_KEY)
+        DewDLConfigs.save_config_file()
+
+    @staticmethod
+    def delete_crt_path():
+        DewDLConfigs._settings_dict.pop(DewDLConfigs.CERT_JSON_KEY)
+        DewDLConfigs.save_config_file()
+
+    @staticmethod
+    def delete_key_path():
+        DewDLConfigs._settings_dict.pop(DewDLConfigs.KEY_JSON_KEY)
+        DewDLConfigs.save_config_file()
+
+    @staticmethod
     def get_b64_key() -> str:
 
         user = DewDLConfigs.get_user()

@@ -3,5 +3,13 @@ from dewdl.enums._udl_environment import UDLEnvironment
 from dewdl.enums._udl_query_type import UDLQueryType
 from dewdl.enums._udl_request_success_code import UDLRequestSuccessCode
 from dewdl.enums._udl_request_error_code import UDLRequestErrorCode
+from dewdl.enums._udl_filedrop_type import UDLFileDropType
 
-__all__ = ["UDLDataMode", "UDLEnvironment", "UDLQueryType", "UDLRequestSuccessCode", "UDLRequestErrorCode"]
+__all__ = [
+    "UDLDataMode",
+    "UDLEnvironment",
+    "UDLQueryType",
+    "UDLRequestSuccessCode",
+    "UDLRequestErrorCode",
+    "UDLFileDropType",
+]
