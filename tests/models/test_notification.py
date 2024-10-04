@@ -1,8 +1,8 @@
-from dewdl.models.notifications import DNDNearGeoNotification
+from dewdl.models import Notification
 
 
 def test_model_validate():
-    DNDNearGeoNotification.model_validate(
+    Notification.model_validate(
         {
             "msgType": "DnD_near_geo",
             "classificationMarking": "U//DS-SSDP-NOTIF",

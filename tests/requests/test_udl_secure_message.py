@@ -4,6 +4,9 @@ from dewdl.requests import UDLSecureMessage
 
 def test_get_topics():
     sms = UDLSecureMessage(environment=UDLEnvironment.TEST)
+    import json
+
+    json.dump(sms.topics, open("topics.json", "w"))
     assert sms.topics[0]["topic"] == "geostatus"
 
 
@@ -14,7 +17,7 @@ def test_get_latest_offset():
 
 def test_describe_topic():
     sms = UDLSecureMessage(environment=UDLEnvironment.TEST)
-    assert sms.describe_topic(UDLSecureMessageTopic.ELSET)["topic"] == UDLSecureMessageTopic.ELSET.value
+    assert sms.describe_topic(UDLSecureMessageTopic.ELSET).topic == UDLSecureMessageTopic.ELSET.value
 
 
 def test_get_messages():

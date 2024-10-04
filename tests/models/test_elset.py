@@ -1,8 +1,8 @@
-from dewdl.models.elsets import DNDElset
+from dewdl.models import Elset
 
 
 def test_model_validate():
-    DNDElset.model_validate(
+    Elset.model_validate(
         {
             "epoch": "2024-07-05T16:13:19.178688Z",
             "classificationMarking": "U//DS-SSDP-ELSET",

@@ -6,7 +6,7 @@ from mockito import unstub, when  # type: ignore
 
 from dewdl import DewDLConfigs
 from dewdl.enums import UDLEnvironment, UDLFileDropType, UDLQueryType
-from dewdl.models.elsets import BaseElset
+from dewdl.models import Elset
 from dewdl.requests import UDLFileDrop, UDLQuery, UDLRequest
 from dewdl.requests._udl_request import (
     _get_from_udl_with_b64,
@@ -75,7 +75,7 @@ def test_post_to_udl_with_b64(valid_udl_elset):
 def test_get_with_cert_config():
     udl_endpoint = UDLQuery(UDLQueryType.ELSET, UDLEnvironment.PROD).with_uuid("c60092be-9220-4f22-b0e4-5e5731341e7a")
     response = UDLRequest.get(udl_endpoint)
-    elset = BaseElset.model_validate(response.json())
+    elset = Elset.model_validate(response.json())
     assert response.status_code == 200
     assert elset.idElset == "c60092be-9220-4f22-b0e4-5e5731341e7a"
 
@@ -85,7 +85,7 @@ def test_get_without_cert_config():
     when(DewDLConfigs).get_key_path().thenReturn(None)
     udl_endpoint = UDLQuery(UDLQueryType.ELSET, UDLEnvironment.TEST).with_uuid("0a040967-b9c1-4609-a62f-090e8970a235")
     response = UDLRequest.get(udl_endpoint)
-    elset = BaseElset.model_validate(response.json())
+    elset = Elset.model_validate(response.json())
     assert response.status_code == 200
     assert elset.idElset == "0a040967-b9c1-4609-a62f-090e8970a235"
 

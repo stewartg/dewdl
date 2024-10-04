@@ -4,6 +4,7 @@ from requests import Session  # type: ignore
 
 from dewdl import DewDLConfigs
 from dewdl.enums import UDLEnvironment, UDLSecureMessageTopic, UDLSecureMessageType
+from dewdl.models import TopicDescription
 
 
 class UDLSecureMessage:
@@ -25,14 +26,14 @@ class UDLSecureMessage:
         url = "/".join([self._base_url, UDLSecureMessageType.TOPICS.value])
         return self.session.get(url).json()
 
-    def get_latest_offset(self, topic: UDLSecureMessageTopic) -> str:
+    def get_latest_offset(self, topic: UDLSecureMessageTopic) -> int:
         url = "/".join([self._base_url, UDLSecureMessageType.LATEST_OFFSET.value, topic.value])
-        return self.session.get(url).text
+        return int(self.session.get(url).text)
 
-    def describe_topic(self, topic: UDLSecureMessageTopic) -> dict:
+    def describe_topic(self, topic: UDLSecureMessageTopic) -> TopicDescription:
         url = "/".join([self._base_url, UDLSecureMessageType.DESCRIBE_TOPIC.value, topic.value])
-        return self.session.get(url).json()
+        return TopicDescription.model_validate(self.session.get(url).json())
 
-    def get_messages(self, topic: UDLSecureMessageTopic, offset: str) -> list[dict]:
-        url = "/".join([self._base_url, UDLSecureMessageType.MESSAGES.value, topic.value, offset])
+    def get_messages(self, topic: UDLSecureMessageTopic, offset: int) -> list[dict]:
+        url = "/".join([self._base_url, UDLSecureMessageType.MESSAGES.value, topic.value, str(offset)])
         return self.session.get(url).json()

@@ -3,7 +3,7 @@ from typing import Optional, Union
 from pydantic import BaseModel
 
 
-class BaseNotification(BaseModel):
+class Notification(BaseModel):
     classificationMarking: str
     msgType: str
     msgBody: Union[str, dict]
