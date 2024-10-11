@@ -1,6 +1,6 @@
 [project]
 name = "dewdl"
-version = "0.2.0"
+version = "0.2.1"
 description = "Request and data manager for interfacing with the UDL"
 readme = "README.md"
 requires-python = ">=3.9"
