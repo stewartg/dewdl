@@ -22,6 +22,10 @@ class DewDLConfigs:
     def load_config_file():
         config_file = DewDLConfigs.config_file_path()
         if not config_file.exists():
+            parent_dir = config_file.parent
+            if not parent_dir.exists():
+                parent_dir.mkdir(parents=True)
+            config_file.touch()
             config_file.write_text("{}")
 
         DewDLConfigs._settings_dict = json.loads(config_file.read_text())
