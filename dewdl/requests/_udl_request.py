@@ -4,7 +4,7 @@ from pathlib import Path
 import requests  # type: ignore
 from requests.models import Response  # type: ignore
 
-from dewdl import DewDLConfigs
+from dewdl import DEWDL_LOG, DewDLConfigs
 from dewdl.enums import UDLRequestSuccessCode
 from dewdl.exceptions import UDLRequestError
 from dewdl.requests._udl_filedrop import UDLFileDrop
@@ -69,6 +69,7 @@ def _filedrop_to_udl_with_b64(udl_endpoint: UDLFileDrop, post_body: list[dict], 
     body_str = UDLRequest.format_booleans(json_str)
 
     # send the post request
+    DEWDL_LOG.info(f"Publishing {len(post_body)} records to {udl_endpoint.to_string()} using base64 key")
     response = requests.post(udl_endpoint.to_string(), data=body_str, verify=True, headers=udl_headers)
 
     # check for successful post
@@ -103,6 +104,7 @@ def _filedrop_to_udl_with_cert(
     body_str = UDLRequest.format_booleans(json_str)
 
     # send the post request
+    DEWDL_LOG.info(f"Publishing {len(post_body)} records to {udl_endpoint.to_string()} crt={cert_path} key={key_path}")
     response = requests.post(
         udl_endpoint.to_string(),
         data=body_str,
@@ -149,6 +151,7 @@ def _post_to_udl_with_b64(udl_endpoint: UDLQuery, post_body: dict, b64_key: str)
     body_str = UDLRequest.format_booleans(json_str)
 
     # send the post request
+    DEWDL_LOG.info(f"Publishing to {udl_endpoint.to_string()} using base64 key")
     response = requests.post(udl_endpoint.to_string(), data=body_str, verify=False, headers=udl_headers)
 
     # check for successful post
@@ -196,6 +199,7 @@ def _post_to_udl_with_cert(udl_endpoint: UDLQuery, post_body: dict, cert_path: P
     body_str = UDLRequest.format_booleans(json_str)
 
     # send the post request
+    DEWDL_LOG.info(f"Publishing to {udl_endpoint.to_string()} crt={cert_path} key={key_path}")
     response = requests.post(
         udl_endpoint.to_string(),
         data=body_str,
@@ -234,7 +238,7 @@ def _get_from_udl_with_b64(udl_endpoint: UDLQuery, b64_key: str) -> Response:
     :return: The response from the UDL server
     :rtype: Response
     """
-
+    DEWDL_LOG.info(f"Retrieving data from {udl_endpoint.to_string()} using base64 key")
     response = requests.get(udl_endpoint.to_string(), headers={"Authorization": b64_key}, verify=False)
     try:
         success_code = UDLRequestSuccessCode(response.status_code)
@@ -257,7 +261,7 @@ def _get_from_udl_with_cert(udl_endpoint: UDLQuery, cert_path: Path, key_path: P
     :return: The response from the UDL server
     :rtype: Response
     """
-
+    DEWDL_LOG.info(f"Retrieving data from {udl_endpoint.to_string()} crt={cert_path} key={key_path}")
     response = requests.get(udl_endpoint.to_string(), cert=(cert_path.as_posix(), key_path.as_posix()), verify=True)
     try:
         success_code = UDLRequestSuccessCode(response.status_code)

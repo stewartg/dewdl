@@ -1,12 +1,12 @@
 [project]
 name = "dewdl"
-version = "0.2.1"
+version = "0.2.2"
 description = "Request and data manager for interfacing with the UDL"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
 authors = [{ name = "Brandon Sexton", email = "bsexton@icr-team.com" }]
-dependencies = ["appdirs", "requests", "pydantic"]
+dependencies = ["appdirs", "requests", "pydantic", "python-json-logger"]
 
 [project.optional-dependencies]
 dev = [
