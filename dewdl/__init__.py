@@ -1,5 +1,7 @@
 import logging
+
 from pythonjsonlogger import jsonlogger
+
 from dewdl._dewdl_configs import DewDLConfigs
 
 DEWDL_LOG = logging.getLogger(__name__)
