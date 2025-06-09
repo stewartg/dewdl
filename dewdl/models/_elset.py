@@ -2,6 +2,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+# ruff: noqa: N815
+
 
 class Elset(BaseModel):
     source: str
