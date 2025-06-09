@@ -2,6 +2,8 @@ from typing import Optional, Union
 
 from pydantic import BaseModel
 
+# ruff: noqa: N815
+
 
 class Notification(BaseModel):
     classificationMarking: str

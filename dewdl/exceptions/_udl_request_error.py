@@ -1,13 +1,12 @@
 import json
 
-from requests.models import Response  # type: ignore
+from requests.models import Response
 
 from dewdl.enums import UDLRequestErrorCode
 
 
 class UDLRequestError(Exception):
     def __init__(self, response: Response) -> None:
-
         try:
             status_code = UDLRequestErrorCode(response.status_code)
         except ValueError:

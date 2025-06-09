@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from mockito import unstub, when  # type: ignore
+from mockito import unstub, when
 
 from dewdl.enums import UDLEnvironment, UDLQueryType
-from dewdl.requests import UDLQuery
+from dewdl.udl_actions import UDLQuery
 
 
 def test_udl_query_factor():

@@ -20,7 +20,6 @@ def mock_unknown_no_msg_response():
 
 
 def test_invalid_credentials(mock_401_response):
-
     with pytest.raises(UDLRequestError) as error_message:
         raise UDLRequestError(mock_401_response)
 
@@ -28,7 +27,6 @@ def test_invalid_credentials(mock_401_response):
 
 
 def test_unknown_with_msg(mock_unknown_with_msg_response):
-
     with pytest.raises(UDLRequestError) as error_message:
         raise UDLRequestError(mock_unknown_with_msg_response)
 
@@ -36,7 +34,6 @@ def test_unknown_with_msg(mock_unknown_with_msg_response):
 
 
 def test_unknown_without_msg(mock_unknown_no_msg_response):
-
     with pytest.raises(UDLRequestError) as error_message:
         raise UDLRequestError(mock_unknown_no_msg_response)
 

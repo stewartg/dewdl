@@ -1,0 +1,243 @@
+import json
+from pathlib import Path
+
+import requests
+from requests import Session
+from requests.models import Response
+
+from dewdl import DEWDL_LOG, DewDLConfigs
+from dewdl.enums import UDLRequestSuccessCode
+from dewdl.exceptions import UDLRequestError
+from dewdl.requests._udl_filedrop import UDLFileDrop
+from dewdl.requests._udl_query import UDLQuery
+
+
+class UDLRequest:
+    @staticmethod
+    def format_booleans(input_str: str) -> str:
+        """Converts the string 'True' to 'true' and 'False' to 'False'.
+
+        :param input_str: The string to convert
+        """
+        return input_str.replace("True", "true").replace("False", "false")
+
+    @staticmethod
+    def get(endpoint: UDLQuery) -> Response:
+        token = DewDLConfigs.get_token()
+        b64_key = DewDLConfigs.get_b64_key()
+        crt, key = DewDLConfigs.get_crt_path(), DewDLConfigs.get_key_path()
+        if token:
+            udl_response = _get_from_udl_with_b64(endpoint, token)
+        elif b64_key:
+            udl_response = _get_from_udl_with_b64(endpoint, b64_key)
+        elif crt and key:
+            udl_response = _get_from_udl_with_cert(endpoint, crt, key)
+        return udl_response
+
+    @staticmethod
+    def post(endpoint: UDLQuery, post_body: dict) -> str:
+        token = DewDLConfigs.get_token()
+        b64_key = DewDLConfigs.get_b64_key()
+        crt, key = DewDLConfigs.get_crt_path(), DewDLConfigs.get_key_path()
+        if token:
+            uuid_str = _post_to_udl_with_b64(endpoint, post_body, token)
+        elif b64_key:
+            uuid_str = _post_to_udl_with_b64(endpoint, post_body, b64_key)
+        elif crt and key:
+            uuid_str = _post_to_udl_with_cert(endpoint, post_body, crt, key)
+        return uuid_str
+
+    @staticmethod
+    def filedrop(endpoint: UDLFileDrop, post_body: list[dict]) -> None:
+        token = DewDLConfigs.get_token()
+        b64_key = DewDLConfigs.get_b64_key()
+        crt, key = DewDLConfigs.get_crt_path(), DewDLConfigs.get_key_path()
+        if token:
+            _filedrop_to_udl_with_b64(endpoint, post_body, token)
+        elif b64_key:
+            _filedrop_to_udl_with_b64(endpoint, post_body, b64_key)
+        elif crt and key:
+            _filedrop_to_udl_with_cert(endpoint, post_body, crt, key)
+
+    # @staticmethod
+    # def filedrop_zip(endpoint: UDLFileDrop, zip_data: bytes) -> None:
+    #     response_text = ""
+    #     if isinstance(zip_data, bytes):
+    #         session = _get_session()
+    #         session.headers.update({"accept": "application/zip"})
+    #         session.headers.update({"content-type": "application/zip"})
+    #         response = requests.post(endpoint.to_string(), data=zip_data, timeout=30)
+    #         # check for successful post
+    #         try:
+    #             success_code = UDLRequestSuccessCode(response.status_code)
+    #         except ValueError:
+    #             success_code = response.status_code
+    #         if success_code != UDLRequestSuccessCode.FILEDROP:
+    #             raise UDLRequestError(response)
+    #         response_text = response.text
+    #     else:
+    #         raise TypeError("Provided zip data must be a byte array (binary file).")
+    #     return response_text
+
+    @staticmethod
+    def accept_json(self) -> dict:
+        """Gets the accept_json header."""
+        return {"Accept": "application/json"}
+
+    @staticmethod
+    def content_json(self) -> dict:
+        """Gets the content_json header."""
+        return {"Content-Type": "application/json"}
+
+
+def _get_from_udl_with_b64(udl_endpoint: UDLQuery, b64_key: str) -> Response:
+    session = Session()
+    session.headers.update({"Authorization": b64_key})
+    DEWDL_LOG.info(f"Retrieving data from {udl_endpoint.to_string()} using base64 key")
+    return _get_udl_response(udl_endpoint, session)
+
+
+def _get_from_udl_with_cert(udl_endpoint: UDLQuery, cert_path: Path, key_path: Path) -> Response:
+    session = Session()
+    session.cert = (cert_path.as_posix(), key_path.as_posix())
+    session.verify = True
+    DEWDL_LOG.info(f"Retrieving data from {udl_endpoint.to_string()} crt={cert_path} key={key_path}")
+    return _get_udl_response(udl_endpoint, session)
+
+
+def _get_udl_response(endpoint: UDLQuery, session: Session):
+    response = session.get(endpoint, timeout=30)
+    try:
+        success_code = UDLRequestSuccessCode(response.status_code)
+    except ValueError:
+        success_code = response.status_code
+    if success_code != UDLRequestSuccessCode.GET:
+        raise UDLRequestError(response)
+    return response
+
+
+def _post_to_udl_with_b64(udl_endpoint: UDLQuery, post_body: dict, b64_key: str) -> str:
+    session = Session()
+    session.headers.update(UDLRequest.accept_json)
+    session.headers.update(UDLRequest.content_json)
+    session.headers.update({"Authorization": b64_key})
+    # send the post request
+    DEWDL_LOG.info(f"Publishing to {udl_endpoint.to_string()} using base64 key")
+    return _post_to_udl(udl_endpoint, post_body, session)
+
+
+def _post_to_udl_with_cert(udl_endpoint: UDLQuery, post_body: dict, cert_path: Path, key_path: Path) -> str:
+    session = Session()
+    session.headers.update(UDLRequest.accept_json)
+    session.headers.update(UDLRequest.content_json)
+    session.cert = (cert_path.as_posix(), key_path.as_posix())
+    session.verify = True
+    # send the post request
+    DEWDL_LOG.info(f"Publishing to {udl_endpoint.to_string()} crt={cert_path} key={key_path}")
+    return _post_to_udl(udl_endpoint, post_body, session)
+
+
+def _filedrop_to_udl_with_b64(udl_endpoint: UDLFileDrop, post_body: list[dict], b64_key: str) -> None:
+    session = Session()
+    session.headers.update(UDLRequest.accept_json)
+    session.headers.update(UDLRequest.content_json)
+    session.headers.update({"Authorization": b64_key})
+    _post_to_udl(udl_endpoint, post_body, session, is_filedrop=True)
+
+
+def _filedrop_to_udl_with_cert(
+    udl_endpoint: UDLFileDrop,
+    post_body: list[dict], cert_path: Path,
+    key_path: Path
+) -> str:
+    session = Session()
+    session.headers.update(UDLRequest.accept_json)
+    session.headers.update(UDLRequest.content_json)
+    session.cert = (cert_path.as_posix(), key_path.as_posix())
+    session.verify = True
+    _post_to_udl(udl_endpoint, post_body, session, is_filedrop=True)
+
+
+def _post_to_udl(udl_endpoint: UDLQuery, post_body: dict, session: Session, is_filedrop: bool = False):
+    # convert the post body to a string and correct boolean case
+    resp_str = ""
+    json_str = json.dumps(post_body)
+    body_str = UDLRequest.format_booleans(json_str)
+    response = session.post(udl_endpoint.to_string(), data=body_str, timeout=30)
+    if is_filedrop:
+        resp_str = _verify_post(response)
+    else:
+        _verify_post(response)
+        resp_str = _get_post_location
+    return resp_str
+
+
+def _verify_post(response: Response) -> str:
+    # check for successful post
+    try:
+        success_code = UDLRequestSuccessCode(response.status_code)
+    except ValueError:
+        success_code = response.status_code
+    if success_code != UDLRequestSuccessCode.POST:
+        raise UDLRequestError(response)
+    return response.text
+
+
+def _get_post_location(response: Response) -> str:
+    # check for location of newly posted data
+    url = response.headers.get("location")
+    if url is None:
+        raise KeyError("No UUID returned from UDL")
+
+    # parse the UUID from the URL
+    return url.split("/")[-1]
+
+
+def _post_zip_to_udl_with_b64(udl_endpoint: UDLQuery, zip_data: bytes, b64_key: str) -> str:
+    """Performs a POST request to the UDL server using a base64 encoded key.
+
+    :param udl_endpoint: URL of the UDL request
+    :type udl_endpoint: str
+    :param json_str: JSON string to send to the UDL server
+    :type json_str: str
+
+    :raises UDLRequestError: If the response code is not 201
+    :raises KeyError: If no UUID is returned from the UDL
+
+    :return: The UUID generated by the UDL after posting
+    :rtype: str
+    """
+    # create the headers for the post request
+    udl_headers = {
+        "accept": "application/zip",
+        "content-type": "application/zip",
+        "Authorization": b64_key,
+    }
+
+    # send the post request
+    DEWDL_LOG.info(f"Publishing to {udl_endpoint.to_string()} using base64 key")
+    response = requests.post(
+        udl_endpoint.to_string(),
+        data=zip_data,
+        verify=False,  # noqa: S501
+        headers=udl_headers,
+        timeout=30,
+    )
+
+    # check for successful post
+    try:
+        success_code = UDLRequestSuccessCode(response.status_code)
+    except ValueError:
+        success_code = response.status_code
+    if success_code != UDLRequestSuccessCode.POST:
+        raise UDLRequestError(response)
+
+    # check for location of newly posted data
+    url = response.headers.get("location")
+    if url is None:
+        raise KeyError("No UUID returned from UDL")
+
+    # parse the UUID from the URL
+    posted_uuid = url.split("/")[-1]
+
+    return posted_uuid
