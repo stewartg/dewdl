@@ -9,7 +9,8 @@ import pytest
 from mockito import mock, verifyNoUnwantedInteractions, when
 
 from dewdl import DewDLConfigs
-from dewdl.enums import UDLEnvironment, UDLFileDropType, UDLQueryType
+from dewdl.enums import UDLEnvironment, UDLFileDropType
+from dewdl.enums._udl_base_data_type import UDLBaseDataType
 from dewdl.requests import UDLRequest
 from dewdl.requests.udl_request_payload import UDLRequestPayload
 from dewdl.udl_actions import UDLFileDrop, UDLQuery
@@ -71,7 +72,7 @@ def test_certs():
 
 @pytest.mark.usefixtures("_unstub")
 def test_get_from_udl_with_cert(test_certs):
-    udl_endpoint = UDLQuery(UDLQueryType.ELSET, UDLEnvironment.TEST).with_uuid("c60092be-9220-4f22-b0e4-5e5731341e7a")
+    udl_endpoint = UDLQuery(UDLBaseDataType.ELSET).with_uuid("c60092be-9220-4f22-b0e4-5e5731341e7a")
     payload = UDLRequestPayload(endpoint=udl_endpoint, crt=test_certs["crt"], key=test_certs["key"])
     # Mock the _make_request method of UDLRequest
     mock_response = mock()
@@ -82,7 +83,7 @@ def test_get_from_udl_with_cert(test_certs):
     when(client_mock).__enter__().thenReturn(client_mock)
     when(client_mock).__exit__(...).thenReturn(None)
     when(httpx).Client(cert=(str(payload.crt), str(payload.key)), verify=True).thenReturn(client_mock)
-    when(client_mock).get(udl_endpoint.to_string(), timeout=30).thenReturn(mock_response)
+    when(client_mock).get(udl_endpoint.to_string(), headers=any, timeout=30).thenReturn(mock_response)
     response = UDLRequest._make_request(payload=payload)
     assert response.status_code == 200
     verifyNoUnwantedInteractions()
@@ -93,7 +94,7 @@ def test_get_from_udl_with_b64():
     # Mock the get_b64_key method to return a mocked value
     mock_b64_key = "Basic mocked_base64_key"
     when(DewDLConfigs).get_b64_key().thenReturn(mock_b64_key)
-    udl_endpoint = UDLQuery(UDLQueryType.ELSET, UDLEnvironment.TEST).with_uuid("0a040967-b9c1-4609-a62f-090e8970a235")
+    udl_endpoint = UDLQuery(UDLBaseDataType.ELSET).with_uuid("0a040967-b9c1-4609-a62f-090e8970a235")
     payload = UDLRequestPayload(endpoint=udl_endpoint, b64_key=DewDLConfigs.get_b64_key())
     # Mock the _make_request method of UDLRequest
     mock_response = mock()
@@ -104,7 +105,7 @@ def test_get_from_udl_with_b64():
     when(client_mock).__enter__().thenReturn(client_mock)
     when(client_mock).__exit__(...).thenReturn(None)
     when(httpx).Client().thenReturn(client_mock)
-    when(client_mock).get(udl_endpoint.to_string(), timeout=30).thenReturn(mock_response)
+    when(client_mock).get(udl_endpoint.to_string(), headers=any, timeout=30).thenReturn(mock_response)
     response = UDLRequest._make_request(payload=payload)
     assert response.status_code == 200
     verifyNoUnwantedInteractions()
@@ -112,7 +113,7 @@ def test_get_from_udl_with_b64():
 
 @pytest.mark.usefixtures("_unstub")
 def test_post_to_udl_with_cert(valid_udl_elset, test_certs):
-    udl_endpoint = UDLQuery(UDLQueryType.ELSET, UDLEnvironment.TEST)
+    udl_endpoint = UDLQuery(UDLBaseDataType.ELSET)
     payload = UDLRequestPayload(
         endpoint=udl_endpoint, method="POST", post_body=valid_udl_elset, crt=test_certs["crt"], key=test_certs["key"]
     )
@@ -138,7 +139,7 @@ def test_post_to_udl_with_b64(valid_udl_elset):
     # Mock the get_b64_key method to return a mocked value
     mock_b64_key = "Basic mocked_base64_key"
     when(DewDLConfigs).get_b64_key().thenReturn(mock_b64_key)
-    udl_endpoint = UDLQuery(UDLQueryType.ELSET, UDLEnvironment.TEST)
+    udl_endpoint = UDLQuery(UDLBaseDataType.ELSET)
     payload = UDLRequestPayload(
         endpoint=udl_endpoint, method="POST", post_body=valid_udl_elset, b64_key=DewDLConfigs.get_b64_key()
     )
@@ -165,7 +166,7 @@ def test_post_to_udl_with_b64(valid_udl_elset):
 @pytest.mark.usefixtures("_unstub")
 def test_filedrop_with_cert(valid_udl_elset, test_certs):
     # Mock the Path class to avoid using hardcoded file paths
-    udl_endpoint = UDLFileDrop(UDLFileDropType.ELSET, UDLEnvironment.TEST)
+    udl_endpoint = UDLFileDrop(UDLFileDropType.ELSET)
     payload = UDLRequestPayload(
         endpoint=udl_endpoint,
         method="POST",
@@ -191,7 +192,7 @@ def test_filedrop_with_cert(valid_udl_elset, test_certs):
 
 @pytest.mark.usefixtures("_unstub")
 def test_post_zip_to_udl_with_cert(valid_udl_elset_zip, test_certs):
-    udl_endpoint = UDLQuery(UDLQueryType.SKY_IMAGERY, UDLEnvironment.TEST)
+    udl_endpoint = UDLQuery(UDLBaseDataType.SKY_IMAGERY)
     payload = UDLRequestPayload(
         endpoint=udl_endpoint,
         method="POST",
@@ -215,27 +216,28 @@ def test_post_zip_to_udl_with_cert(valid_udl_elset_zip, test_certs):
     verifyNoUnwantedInteractions()
 
 
+# TODO: implement this
 # def test_post_with_cert_config(valid_udl_elset):
-#     udl_endpoint = UDLQuery(UDLQueryType.ELSET, UDLEnvironment.PROD)
+#     udl_endpoint = UDLQuery(UDLBaseDataType.ELSET, UDLEnvironment.PROD)
 #     uuid = UDLRequest.post(udl_endpoint, valid_udl_elset)
 #     uuid_regex = r"^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$"
 #     assert re.match(uuid_regex, uuid)
 
-
+# TODO: implement this test
 # def test_post_without_cert_config(valid_udl_elset):
 #     when(DewDLConfigs).get_crt_path().thenReturn(None)
 #     when(DewDLConfigs).get_key_path().thenReturn(None)
-#     udl_endpoint = UDLQuery(UDLQueryType.ELSET, UDLEnvironment.TEST)
+#     udl_endpoint = UDLQuery(UDLBaseDataType.ELSET)
 #     uuid = UDLRequest.post(udl_endpoint, valid_udl_elset)
 #     uuid_regex = r"^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$"
 #     assert re.match(uuid_regex, uuid)
 
-
+# TODO: implement this test
 # def test_filedrop_with_cert_config(valid_udl_elset):
 #     udl_endpoint = UDLFileDrop(UDLFileDropType.ELSET, UDLEnvironment.PROD)
 #     UDLRequest.filedrop(udl_endpoint, [valid_udl_elset])
 
-
+# TODO: implement this test
 # def test_filedrop_without_cert_config(valid_udl_elset):
 #     when(DewDLConfigs).get_crt_path().thenReturn(None)
 #     when(DewDLConfigs).get_key_path().thenReturn(None)

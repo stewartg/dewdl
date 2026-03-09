@@ -1,21 +1,18 @@
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
-
-from pydantic import BaseModel, ConfigDict
 
 from dewdl.udl_actions import UDLBaseAction
 
 
-class UDLRequestPayload(BaseModel):
-    method: str = "GET"
+@dataclass
+class UDLRequestPayload:
     endpoint: UDLBaseAction
-    post_body: Optional[dict] = None
-    zip_data: Optional[bytes] = None
-    token: Optional[str] = None
-    b64_key: Optional[str] = None
-    crt: Optional[Path] = None
-    key: Optional[Path] = None
+    method: str = "GET"
+    post_body: dict | None = None
+    zip_data: bytes | None = None
+    token: str | None = None
+    b64_key: str | None = None
+    crt: Path | None = None
+    key: Path | None = None
     async_flag: bool = False
     is_filedrop: bool = False
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)

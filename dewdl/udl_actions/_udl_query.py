@@ -1,33 +1,38 @@
 from datetime import datetime
 
-from dewdl.enums import UDLEnvironment, UDLQueryType
+from dewdl.enums import UDLQueryType
+from dewdl.enums._udl_base_data_type import UDLBaseDataType
+from dewdl.enums._udl_date_fields import UDLDateFields
 from dewdl.udl_actions import UDLBaseAction
 
 
 class UDLQuery(UDLBaseAction):
-    TIME_MAP = {UDLQueryType.EO_OBSERVATION.value: "obTime"}
-    DEFAULT_TIME_KEY = "epoch"
-
     DEFAULT_MAX_RESULTS = 10000
 
-    def __init__(self, data_endpoint: UDLQueryType, udl_environment: UDLEnvironment) -> None:
-        super().__init__(data_endpoint.value, udl_environment.value)
+    def __init__(self, udl_data_type: UDLBaseDataType) -> None:
+        super().__init__(UDLQueryType[udl_data_type.name].value)
+        self.base_data_type = udl_data_type
+        self.time_key = UDLDateFields.get(self.base_data_type)
+        self.dt_format = "%Y-%m-%dT%H:%M:%S.%fZ"
         self._time: str = ""
         self._source: str = ""
         self._max_results: str = f"maxResults={UDLQuery.DEFAULT_MAX_RESULTS}"
         self._descriptor: str = ""
 
     def after(self, epoch: datetime) -> "UDLQuery":
-        time_key = UDLQuery.TIME_MAP.get(self._end_point, UDLQuery.DEFAULT_TIME_KEY)
-        epoch_str = epoch.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        self._time = f"{time_key}=%3E{epoch_str}"
+        epoch_str = epoch.strftime(self.dt_format)
+        self._time = f"{self.time_key}=%3E{epoch_str}"
+        return self._regenerate()
+
+    def before(self, epoch: datetime) -> "UDLQuery":
+        epoch_str = epoch.strftime(self.dt_format)
+        self._time = f"{self.time_key}=%3C{epoch_str}"
         return self._regenerate()
 
     def between(self, start: datetime, end: datetime) -> "UDLQuery":
-        time_key = UDLQuery.TIME_MAP.get(self._end_point, UDLQuery.DEFAULT_TIME_KEY)
-        start_str = start.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        end_str = end.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        self._time = f"{time_key}={start_str}..{end_str}"
+        start_str = start.strftime(self.dt_format)
+        end_str = end.strftime(self.dt_format)
+        self._time = f"{self.time_key}={start_str}..{end_str}"
         return self._regenerate()
 
     def with_uuid(self, uuid: str) -> "UDLQuery":

@@ -12,6 +12,8 @@ def set_config(config_key: str, config_value: str):
         DewDLConfigs.update_crt_path(Path(config_value))
     elif config_key == DewDLConfigs.KEY_JSON_KEY:
         DewDLConfigs.update_key_path(Path(config_value))
+    elif config_key == DewDLConfigs.UDL_ENV_KEY:
+        DewDLConfigs.update_udl_env(config_value)
 
 
 def delete(config_key: str):
@@ -23,3 +25,5 @@ def delete(config_key: str):
         DewDLConfigs.delete_crt_path()
     elif config_key == DewDLConfigs.KEY_JSON_KEY:
         DewDLConfigs.delete_key_path()
+    elif config_key == DewDLConfigs.UDL_ENV_KEY:
+        DewDLConfigs.delete_udl_env()

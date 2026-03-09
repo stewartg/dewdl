@@ -1,5 +1,5 @@
 import pytest
-from mockito import mock  # type: ignore
+from mockito import mock
 
 from dewdl.exceptions import UDLRequestError
 

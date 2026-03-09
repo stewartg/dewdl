@@ -1,10 +1,9 @@
 [project]
 name = "dewdl"
-version = "0.2.4"
+version = "3.1.1"
 description = "Request and data manager for interfacing with the UDL"
 readme = "README.md"
-requires-python = ">=3.9"
-license = "MIT"
+requires-python = ">=3.10"
 authors = [{ name = "Brandon Sexton", email = "bsexton@icr-team.com" }]
 dependencies = [
   "appdirs",
@@ -34,13 +33,27 @@ build = [
   "build"
 ]
 
+deploy = [
+  "twine==6.1.0"
+]
+
 docs = [
   "sphinx",
   "sphinx-autodoc-typehints",
   "sphinx-markdown-builder"
 ]
 
-deploy = ["twine"]
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_files = [
+    "pyproject.toml:version"
+]
+tag_format = "$version"
+version_scheme = "pep440"
+version_provider = "pep621"
+update_changelog_on_bump = false
+annotated_tag = true
+bump_message = "release $current_version → $new_version"
 
 [project.scripts]
 dewdl = "dewdl._cli._cli_main:run"
@@ -87,6 +100,7 @@ select = [
     "W",  # Warning
     "YTT", # flake8-2020
 ]
+
 ignore = [
     "FIX001",   # line-contains-fixme
     "FIX002",   # line-contains-todo

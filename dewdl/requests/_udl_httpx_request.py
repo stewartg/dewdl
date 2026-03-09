@@ -1,9 +1,7 @@
 import json
 from pathlib import Path
-from typing import Optional, Union
 
 import httpx
-from pydantic import BaseModel, ConfigDict
 
 from dewdl import DEWDL_LOG, DewDLConfigs
 from dewdl.enums import UDLRequestSuccessCode
@@ -41,7 +39,7 @@ class UDLRequest:
         return UDLRequest._make_request(payload=payload)
 
     @staticmethod
-    def post(udl_endpoint: UDLQuery, post_data: Union[dict, bytes], async_flag: bool = False) -> str:
+    def post(udl_endpoint: UDLQuery, post_data: dict | bytes, async_flag: bool = False) -> str:
         token, b64_key, crt, key = UDLRequest._get_configs()
         payload = UDLRequestPayload(
             endpoint=udl_endpoint,
@@ -88,9 +86,10 @@ class UDLRequest:
             headers["Authorization"] = auth_header_value
         if payload.method == "POST":
             UDLRequest._setup_post_params(payload, request_args, headers)
-
+        request_args["headers"] = headers
         DEWDL_LOG.info(
-            f"Publishing to {payload.endpoint.to_string()} using {'token' if payload.token else 'b64_key' if payload.b64_key else 'cert'}"
+            f"Perfoming {payload.method} to {payload.endpoint.to_string()} "
+            f"using {'token' if payload.token else 'b64_key' if payload.b64_key else 'cert'}"
         )
         if payload.async_flag:
             request_args["client"] = httpx_client
@@ -100,7 +99,7 @@ class UDLRequest:
             return response_func(**request_args)
 
     @staticmethod
-    def _check_cert(crt: Optional[Path] = None, key: Optional[Path] = None):
+    def _check_cert(crt: Path | None, key: Path | None):
         cert = None
         if crt and key:
             crt_posix = crt.as_posix() if hasattr(crt, "as_posix") else str(crt)
@@ -136,7 +135,6 @@ class UDLRequest:
         elif payload.zip_data:
             data = payload.zip_data
             headers.update({**UDLRequest.accept_zip(), **UDLRequest.content_zip()})
-        request_args["headers"] = headers
         request_args["post_data"] = data
         request_args["is_filedrop"] = payload.is_filedrop
 
@@ -160,22 +158,11 @@ class UDLRequest:
         """Gets the content_zip header."""
         return {"content-type": "application/zip"}
 
-    class Payload(BaseModel):
-        method: str = "GET"
-        post_body: Optional[dict] = None
-        zip_data: Optional[bytes] = None
-        token: Optional[str] = None
-        b64_key: Optional[str] = None
-        crt: Optional[Path] = None
-        key: Optional[Path] = None
-        async_flag: bool = False
-        is_filedrop: bool = False
 
-        model_config = ConfigDict(arbitrary_types_allowed=True)
-
-
-async def _get_udl_response_async(udl_endpoint: UDLBaseAction, client: httpx.AsyncClient) -> httpx.Response:
-    response = await client.get(udl_endpoint.to_string(), timeout=30)
+async def _get_udl_response_async(
+    udl_endpoint: UDLBaseAction, client: httpx.AsyncClient, headers: dict = None
+) -> httpx.Response:
+    response = await client.get(udl_endpoint.to_string(), headers=headers, timeout=30)
     try:
         success_code = UDLRequestSuccessCode(response.status_code)
     except ValueError:
@@ -185,8 +172,8 @@ async def _get_udl_response_async(udl_endpoint: UDLBaseAction, client: httpx.Asy
     return response
 
 
-def _get_udl_response(udl_endpoint: UDLBaseAction, client: httpx.Client) -> httpx.Response:
-    response = client.get(udl_endpoint.to_string(), timeout=30)
+def _get_udl_response(udl_endpoint: UDLBaseAction, client: httpx.Client, headers: dict = None) -> httpx.Response:
+    response = client.get(udl_endpoint.to_string(), headers=headers, timeout=30)
     try:
         success_code = UDLRequestSuccessCode(response.status_code)
     except ValueError:
@@ -198,7 +185,7 @@ def _get_udl_response(udl_endpoint: UDLBaseAction, client: httpx.Client) -> http
 
 async def _post_to_udl_async(
     udl_endpoint: UDLBaseAction,
-    post_data: Union[str, bytes],
+    post_data: str | bytes,
     client: httpx.AsyncClient,
     headers: dict = None,
     is_filedrop: bool = False,
@@ -214,7 +201,7 @@ async def _post_to_udl_async(
 
 def _post_to_udl(
     udl_endpoint: UDLBaseAction,
-    post_data: Union[str, bytes],
+    post_data: str | bytes,
     client: httpx.Client,
     headers: dict = None,
     is_filedrop: bool = False,

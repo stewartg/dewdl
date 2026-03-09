@@ -135,5 +135,3 @@ dmypy.json
 .vscode/tasks.json
 
 as_headers/
-
-certs/

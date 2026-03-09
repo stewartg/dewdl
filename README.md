@@ -2,6 +2,25 @@
 
 DewDL is intended to enable quick access to products from the Unified Data Library.
 
+## Development
+
+To be developed/deployed against the latest stable release of Python 3.10 or later
+
+
+1. Clone this repo, you should be in the /your/cloned/directory/dewdl directory. If not, cd to that directory.
+2. Source the dev setup script to setup your environment:
+1. This script will create a virtual environment, install the required dependencies, activate the new environment and setup pre-commit hooks. If you are using VSCODE, it should recognize the virtual environment install and prompt to configure your python interpreter to use the newly created virtual environment.
+1. There are 4 optional arguments:
+    * `-v` flag specifies which version of python to use (example: `-v 3.11`)
+    * `-d` installs build, dev, and test dependencies in editable mode
+    * `-b` installs build dependencies only
+    * `-a` installs all dependencies in editable mode/
+1. To use the default python version and setup an editable dev environment with all dependencies installed run:
+
+```bash
+source scripts/setup_python_environment.sh -a
+```
+
 ## Getting Started
 
 DewDL can be used by explicitly passing credentials into functions found in `dewdl.requests._udl_httpx_request`; however,

@@ -14,6 +14,7 @@ class DewDLConfigs:
     CERT_JSON_KEY = "crt"
     KEY_JSON_KEY = "key"
     TOKEN_JSON_KEY = "token"  # noqa: S105
+    UDL_ENV_KEY = "udl_env"
 
     _settings_dict: dict = {}
     _cached_state: dict = {}
@@ -118,6 +119,15 @@ class DewDLConfigs:
         return DewDLConfigs._settings_dict.get(DewDLConfigs.TOKEN_JSON_KEY) is not None
 
     @staticmethod
+    def get_udl_env() -> str | None:
+        return DewDLConfigs._settings_dict.get(DewDLConfigs.UDL_ENV_KEY)
+
+    @staticmethod
+    def update_udl_env(udl_env: str):
+        DewDLConfigs._settings_dict[DewDLConfigs.UDL_ENV_KEY] = udl_env
+        DewDLConfigs.save_config_file()
+
+    @staticmethod
     def delete_user():
         DewDLConfigs._settings_dict.pop(DewDLConfigs.USER_JSON_KEY)
         DewDLConfigs.save_config_file()
@@ -140,6 +150,11 @@ class DewDLConfigs:
     @staticmethod
     def delete_token():
         DewDLConfigs._settings_dict.pop(DewDLConfigs.TOKEN)
+        DewDLConfigs.save_config_file()
+
+    @staticmethod
+    def delete_udl_env():
+        DewDLConfigs._settings_dict.pop(DewDLConfigs.UDL_ENV_KEY)
         DewDLConfigs.save_config_file()
 
     @staticmethod
@@ -172,6 +187,7 @@ class DewDLConfigs:
             print(f"Password: {DewDLConfigs.get_password()}")
             print(f"CRT Path: {DewDLConfigs.get_crt_path()}")
             print(f"Key Path: {DewDLConfigs.get_key_path()}")
+            print(f"UDL Environment: {DewDLConfigs.get_udl_env()}")
         else:
             if config_key == DewDLConfigs.USER_JSON_KEY:
                 print(f"User: {DewDLConfigs.get_user()}")
@@ -181,3 +197,5 @@ class DewDLConfigs:
                 print(f"CRT Path: {DewDLConfigs.get_crt_path()}")
             elif config_key == DewDLConfigs.KEY_JSON_KEY:
                 print(f"Key Path: {DewDLConfigs.get_key_path()}")
+            elif config_key == DewDLConfigs.UDL_ENV_KEY:
+                print(f"UDL Environment: {DewDLConfigs.get_udl_env()}")

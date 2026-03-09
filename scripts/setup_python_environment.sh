@@ -4,9 +4,11 @@ MIN_PYTHON_VERSION=""
 PYTHON_VERSION=""
 # Initialize variables to store the argument values
 dev_flag=false
+test_flag=false
 build_flag=false
+deploy_flag=false
 all_flag=false
-PYTHON_VERSION_FLAG=false
+EDITABLE=""
 VERSION_VAR=""
 GREEN=$'\e[0;32m'
 YELLOW=$'\e[0;33m'
@@ -63,29 +65,23 @@ usage() {
     echo "Options:"
     echo "  [-h|--help]: Display this help message and exit. [default]"
     echo "  [-v|--version] 3.11: The version of the python virtual environment to install. If not provided,"
-    echo " the script will attempt to use system default python version."
+    echo "        the script will attempt to use system default python version."
     echo "  [-b|--build]: Install build dependencies. [default]"
-    echo "  [-d|--dev]: Install development and test dependencies."
-    echo "  [-a|--all]: Install non development dependencies above except 'dev' dependencies."
-    get_min_python_version
-    echo " The minimum required python version is $MIN_PYTHON_VERSION"
+    echo "  [-d|--dev]: Install development dependencies in editable mode."
+    echo "  [-t|--test]: Install development dependencies for test (non-editable)."
+    echo "  [-a|--all]: Install all dependencies (non-editable)."
+    echo ""
 }
-
-# Check if the user requested help
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    usage
-    return 1
-fi
 
 if [[ -z "$BASH_SOURCE" || "$BASH_SOURCE" == "$0" ]]; then
     echo "Script should not be executed directly"
     usage
-    return 1
+    exit 1
 fi
 
 # Check if minimum python3 is installed and exit if not. If it is, check if a version
 # argument was supplied and verify its greater than or equal to the minimum version
-# and that its installed. If a version argument is not supplied, get the installed python3 version.
+# and that its installed. If a version argument is not supplied, get the latest installed python3 version.
 verify_python_version() {
     if ! command -v python3 &> /dev/null; then
         echo "${RED}Python 3 could not be found. Please install at least Python $MIN_PYTHON_VERSION first.${NC}"
@@ -95,8 +91,15 @@ verify_python_version() {
     if [ -n "$VERSION_VAR" ]; then
         get_python_version "$VERSION_VAR" "$MIN_PYTHON_VERSION"
     else
-        read py_version _ <<< $(python3 --version | awk '{print $2}' | cut -d '.' -f 1,2)
-        get_python_version "$py_version" "$MIN_PYTHON_VERSION"
+        py_path_version=$(find /usr/bin -type f -name 'python3.[0-9]*' | sort -V | tail -1)
+        if [ -z "$py_path_version" ]; then
+            echo "${RED}No suitable Python version found in /usr/bin. Please install at least Python $MIN_PYTHON_VERSION first.${NC}"
+            return 1
+        else
+            # Extract the version number from the path
+            read py_version _ <<< $(echo "$py_path_version" | grep -oP '\d+\.\d+')
+            get_python_version "$py_version" "$MIN_PYTHON_VERSION"
+        fi
     fi
 }
 
@@ -115,60 +118,60 @@ activate_virtual_environment() {
     source "$VENV_DIR/bin/activate"
 }
 
-# Install required packages using pip including all dev packages
+# Install required packages using pip
 install_packages() {
     echo "${GREEN}Installing required Python packages...${NC}"
     sh scripts/set_pip_configuration.sh $VENV_DIR
+    
+    # Prevents the WARNING: There was an error checking the latest version of pip.
+    if [ -d ~/.cache/pip/selfcheck/ ]; then
+        rm -r ~/.cache/pip/selfcheck/
+    fi
+
     pip install --upgrade pip
 
     dependencies=()
 
     if [[ "${all_flag}" == "true" ]]; then
-        dependencies+=( "build" "dev" )
+        dependencies+=( "build" "dev" "deploy" )
     else
-        if [[ "${dev_flag}" == "true" ]]; then
+        if [[ "${dev_flag}" == "true"  || "${test_flag}" == "true" ]]; then
             dependencies+=( "dev" )
         fi
         if [[ "${build_flag}" == "true" ]]; then
             dependencies+=( "build" )
         fi
+        if [[ "${deploy_flag}" == "true" ]]; then
+            dependencies+=( "deploy" )
+        fi
 
         # If no specific flags are set, default to 'build'
         if [ ${#dependencies[@]} -eq 0 ]; then
-        dependencies=( "build" )
+            dependencies=( "build" )
         fi
     fi
 
     do_pip_install "${dependencies[@]}"
 
     # Print a success message
-    echo "${ORANGE}Development environment setup complete.${NC}"
+    echo "${ORANGE}Enclave python environment setup complete.${NC}"
 }
 
 do_pip_install() {
     dependencies=("$@")
-    local dev_mode=false
 
     # Join dependencies into a single comma-separated list
     dependency_str=$(IFS=,; echo "${dependencies[*]}")
 
-    # Check if 'dev' is in the dependencies array
-    for dependency in "${dependencies[@]}"; do
-        if [ "$dependency" == "dev" ]; then
-            dev_mode=true
-            break
-        fi
-    done
-
-    if $dev_mode; then
+    if [[ -n $EDITABLE ]]; then
         echo "${GREEN}Installing ${dependency_str} dependencies in${NC} ${ORANGE}editable mode${NC}"
-        pip install --no-cache-dir -e .[${dependency_str}]
     else
         echo "${GREEN}Installing ${dependency_str} dependencies...${NC}"
-        pip install .[${dependency_str}]
     fi
 
-    if $dev_mode; then
+    pip install ${EDITABLE} .[${dependency_str}]
+
+    if $dev_flag || $all_flag; then
         # Install pre-commit hooks only once after all dependencies are installed
         pre-commit install
     fi
@@ -210,20 +213,34 @@ get_python_version() {
 # Parse command-line arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
+        -h|--help)
+            usage
+            exit 0
+            ;;
         -v|--version)
             VERSION_VAR=$2
             shift 1 # past argument=value
             ;;
         -d|--dev)
             dev_flag=true
+            EDITABLE="-e"
+            shift 1 # past argument=value
+            ;;
+        -t|--test)
+            test_flag=true
             shift 1 # past argument=value
             ;;
         -b|--build)
             build_flag=true
             shift 1
             ;;
+        -y|--deploy)
+            deploy_flag=true
+            shift 1 # past argument=value
+            ;;
         -a|--all)
             all_flag=true
+            EDITABLE="-e"
             shift 1 # past argument=value
             ;;
         -*|--*=) # unsupported flags
